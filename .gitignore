@@ -1,0 +1,28 @@
+# Terraform directories and files
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+
+# Variable override files (contains secrets — keep out of version control)
+*.tfvars
+!*.tfvars.example
+
+# Plan output
+*.tfplan
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Certificate directory containing sensitive keys and certificates
+cert/
+
+# OS
+.DS_Store

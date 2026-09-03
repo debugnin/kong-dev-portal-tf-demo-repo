@@ -1,0 +1,2 @@
+# Exclude dev portal markdown pages from Prettier formatting
+dev-portal/**/*.md

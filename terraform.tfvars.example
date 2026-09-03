@@ -1,0 +1,50 @@
+# Copy to terraform.tfvars and fill in real values. terraform.tfvars holds
+# secrets and should never be committed.
+
+# --- Auth ---
+konnect_token   = "your-konnect-personal-access-token"
+konnect_api_url = "https://au.api.konghq.com"
+organisation_name = "KongAir"
+
+# --- Control Plane ---
+dev_portal_cp_name     = "Dev Portal Control Plane"
+dataplane_api_base_url = "http://localhost:8000"
+
+# --- Portal ---
+dev_portal_name         = "Developer Portal"
+dev_portal_display_name = "Developer Portal"
+dev_portal_desc_prefix  = "Developer Portal deployed for"
+dev_portal_desc_suffix  = "production use-cases."
+
+# --- Branding ---
+dev_portal_logo_path      = "./dev-portal/image-assets/kong-air-logo.png"
+dev_portal_logo_file_type = "png"
+dev_portal_brand_color    = "#8250FF"
+dev_portal_color_mode     = "light"
+
+# --- Pages & Snippets ---
+dev_portal_snippet_code_block_graphix_path        = "./dev-portal/snippets/code-block-graphix.md"
+dev_portal_page_home_path                         = "./dev-portal/pages/home.md"
+dev_portal_page_getting_started_path              = "./dev-portal/pages/getting-started.md"
+dev_portal_page_apis_path                         = "./dev-portal/pages/apis.md"
+dev_portal_page_content_home_page_hero_bg_img_url = "https://github.com/jharmn/img-bucket/blob/main/images/travel.png?raw=true"
+dev_portal_page_content_home_page_hero_text_color = "#000000"
+dev_portal_page_content_home_page_hero_img_width  = "55%"
+
+# --- OIDC (Dev Portal SSO login) ---
+dev_portal_oidc_issuer        = "https://dev-xxxx.au.auth0.com/"
+dev_portal_oidc_client_id     = "your-oidc-client-id"
+dev_portal_oidc_client_secret = "your-oidc-client-secret"
+dev_portal_oidc_scopes        = ["openid", "profile", "email"]
+dev_portal_oidc_claim_name    = "name"
+dev_portal_oidc_claim_email   = "email"
+dev_portal_oidc_claim_groups  = "https://yourdomain.com/groups"
+
+# --- Application Auth Strategy (M2M API consumers) ---
+app_auth_oidc_issuer   = "https://dev-xxxx.au.auth0.com/"
+app_auth_oidc_scopes   = []
+app_auth_oidc_audience = "https://kongair.com/api/v1"
+
+# Auth0 Machine-to-Machine application used for Dynamic Client Registration
+app_auth_dcr_client_id     = "your-auth0-dcr-client-id"
+app_auth_dcr_client_secret = "your-auth0-dcr-client-secret"
