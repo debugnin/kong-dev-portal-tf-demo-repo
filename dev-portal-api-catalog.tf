@@ -30,12 +30,16 @@ resource "konnect_api" "api" {
   slug = each.key
   spec_content = replace(
     replace(
-      file("${path.module}/api-specs/${local.api_files[each.key].path}"),
-      "/servers:\\s*-\\s*url:\\s*\"[^\"]*\"/",
-      ""
+      replace(
+        file("${path.module}/api-specs/${local.api_files[each.key].path}"),
+        "/servers:\\s*-\\s*url:\\s*\"[^\"]*\"/",
+        ""
+      ),
+      "paths:",
+      "servers:\n  - url: \"${var.dataplane_api_base_url}\"\npaths:"
     ),
-    "paths:",
-    "servers:\n  - url: \"${var.dataplane_api_base_url}\"\npaths:"
+    "__OIDC_TOKEN_URL__",
+    "${trimsuffix(var.app_auth_oidc_issuer, "/")}/oauth/token"
   )
   labels = {
     domain = "acme"
@@ -46,9 +50,17 @@ resource "konnect_api" "api" {
 resource "konnect_api_document" "doc" {
   for_each = local.apis
 
-  api_id  = konnect_api.api[each.key].id
-  content = file("${path.module}/api-specs/${dirname(local.api_files[each.key].path)}/additional-doc.md")
-  slug    = "${each.key}-docs"
+  api_id = konnect_api.api[each.key].id
+  content = replace(
+    replace(
+      file("${path.module}/api-specs/${dirname(local.api_files[each.key].path)}/additional-doc.md"),
+      "__OIDC_TOKEN_URL__",
+      "${trimsuffix(var.app_auth_oidc_issuer, "/")}/oauth/token"
+    ),
+    "__DATAPLANE_BASE_URL__",
+    var.dataplane_api_base_url
+  )
+  slug = "${each.key}-docs"
   status  = "published"
   title   = "${local.api_specs[each.key].info.title} API Documentation"
 }
@@ -66,9 +78,14 @@ resource "konnect_dcr_provider" "auth0" {
     dcr_config = {
       initial_client_id     = var.app_auth_dcr_client_id
       initial_client_secret = var.app_auth_dcr_client_secret
-      # initial_client_audience is left unset: it's only required when Auth0
-      # uses a custom domain (we don't), in which case it defaults to the
-      # issuer, which is already the correct Management API audience here.
+      # initial_client_audience must be explicit: when unset, Konnect
+      # defaults to the bare issuer URL as the M2M token audience, but
+      # Auth0's Management API audience is always "{issuer}/api/v2/" (even
+      # without a custom domain) - the bare issuer gets rejected with
+      # "Service not enabled within domain" (verified directly against this
+      # tenant), which is what caused the application-creation "integration
+      # error" in the Dev Portal.
+      initial_client_audience = "${trimsuffix(var.app_auth_oidc_issuer, "/")}/api/v2/"
 
       # Lets each developer choose which of the auth strategy's scopes to
       # request when registering an application, instead of every app
@@ -130,4 +147,26 @@ resource "konnect_api_publication" "publication" {
   # than set to []: the provider rejects an empty list (min 1 element).
   # Private APIs require Auth0-issued OIDC credentials via DCR.
   auth_strategy_ids = local.api_files[each.key].visibility == "public" ? null : [konnect_application_auth_strategy.oidc_auth0.id]
+}
+
+# Links each catalog API to the Dev Portal control plane
+# (konnect_gateway_control_plane.dev_portal_cp, defined in
+# dev-portal-control-plane.tf) via a control-plane-level implementation
+# reference, rather than a specific Gateway Service. This is what makes
+# ACE's operations router (see kong/plugins/ace/operations_router.lua in
+# the gateway source) actually resolve `ace_operations` for a given api_id
+# - without this link, incoming requests never match an operation and
+# (with match_policy = "if_present") bypass ACE's auth/permission checks
+# entirely.
+resource "konnect_api_implementation" "implementation" {
+  for_each = local.apis
+
+  api_id = konnect_api.api[each.key].id
+  control_plane_reference = {
+    control_plane = {
+      id = konnect_gateway_control_plane.dev_portal_cp.id
+    }
+  }
+
+  depends_on = [konnect_gateway_plugin_ace.plugin_ace]
 }

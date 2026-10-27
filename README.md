@@ -60,11 +60,12 @@ terraform apply
 ├── variables.tf                      # Variable definitions
 ├── terraform.tfvars                  # Variable values (gitignored, environment-specific)
 ├── dev-portal-control-plane.tf       # Control plane, global plugins (ACE, CORS)
+│                                      # ACE enforces each API's publication auth strategy for the whole control plane
 ├── dev-portal-setup.tf               # Portal, teams, OIDC/basic-auth, role assignments
 ├── dev-portal-api-catalog.tf         # API catalog and auth strategy configuration
 ├── outputs.tf                        # Terraform outputs
 ├── scripts/
-│   └── deck-sync.sh                  # Syncs gateway routes/plugins (mocking, openid-connect) to the control plane
+│   └── deck-sync.sh                  # Syncs gateway routes/plugins (mocking) to the control plane
 ├── api-specs/                        # OpenAPI specifications
 │   ├── flights/                         # KongAir Flights API
 │   └── bookings/                     # KongAir Bookings API
@@ -119,22 +120,20 @@ The OpenAPI `info.version` remains the API version source of truth inside the sp
 
 ## Gateway Plugin Sync (`scripts/deck-sync.sh`)
 
-Converts each OpenAPI spec to deck format and pushes it to the control plane with `deck gateway sync`, injecting a `mocking` plugin per service and, for private APIs, an `openid-connect` plugin per route requiring the matching `<api>:read`/`<api>:write` scope. Terraform does not run this script — invoke it manually after applying the auth strategy changes in `dev-portal-api-catalog.tf`.
+Converts each OpenAPI spec to deck format and pushes it to the control plane with `deck gateway sync`, injecting a `mocking` plugin per service. Terraform does not run this script — invoke it manually after applying the catalog/publication changes in `dev-portal-api-catalog.tf`.
+
+Authorization is no longer injected per-route by this script. Instead, the control plane's `konnect_gateway_plugin_ace` (ACE) plugin — defined in `dev-portal-control-plane.tf` — enforces the auth strategy selected on each API's publication (see `konnect_api_publication.publication` in `dev-portal-api-catalog.tf`) across the whole control plane, with `match_policy = "if_present"` so only requests matching a published API operation are access-controlled.
 
 Required environment variables:
 
 - `KONNECT_TOKEN` — Konnect personal access token
 - `CP_NAME` — target control plane name
-- `APP_AUTH_OIDC_ISSUER` — must match `var.app_auth_oidc_issuer`
-- `APP_AUTH_OIDC_AUDIENCE` — must match `var.app_auth_oidc_audience`; enforced via the injected plugin's `audience`/`audience_required` config so tokens issued for a different API are rejected
 
 Optional: `KONNECT_ADDR` (defaults to `https://au.api.konghq.com`).
 
 ```bash
 export KONNECT_TOKEN="your-konnect-personal-access-token"
 export CP_NAME="your-control-plane-name"
-export APP_AUTH_OIDC_ISSUER="https://dev-xxxx.au.auth0.com/"
-export APP_AUTH_OIDC_AUDIENCE="https://kongair.com/api/v1"
 ./scripts/deck-sync.sh
 ```
 
@@ -157,6 +156,21 @@ The portal includes team-based access control with both basic auth and OIDC (SSO
 4. **Commit and push** to version control
 
 ## Troubleshooting
+
+### DCR Integration Error
+
+If you get an "integration error" when creating applications with DCR:
+
+1. The Application Auth Strategy may be inactive (common after initial deployment)
+2. Run the activation script:
+   ```bash
+   export KONNECT_TOKEN="your-token"
+   ./scripts/activate-auth-strategy.sh
+   ```
+3. See [DCR_FIX.md](./DCR_FIX.md) for detailed troubleshooting
+4. Run diagnostics: `./scripts/check-dcr-config.sh`
+
+**Note**: The auth strategy `active` attribute is read-only in Terraform, so manual activation via the Konnect API or UI is required after initial deployment.
 
 ### CORS Issues
 

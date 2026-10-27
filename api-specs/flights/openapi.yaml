@@ -4,34 +4,8 @@ info:
   description: KongAir Flights service provides the scheduled flights for KongAir.
   version: 0.1.0
 security:
-  - ApiKeyAuth: []
+  - BearerAuth: []
 paths:
-  /flights/health:
-    get:
-      summary: Health check endpoint for Kubernetes
-      description: Endpoint that returns the service health status.
-      security: []
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "OK"
-        '500':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "unhealthy"
   /flights:
     get:
       summary: Get KongAir planned flights
@@ -147,10 +121,32 @@ paths:
                     type: string
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: apikey
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT bearer token authentication. Obtain a client_id/client_secret by
+        registering an application in the KongAir Dev Portal (Dynamic Client
+        Registration), then exchange them for a JWT access token via the
+        OAuth2 client_credentials grant against the token endpoint:
+
+        ```
+        curl -X POST "__OIDC_TOKEN_URL__" \
+          -d grant_type=client_credentials \
+          -d client_id=<CLIENT_ID> \
+          -d client_secret=<CLIENT_SECRET> \
+          -d audience="https://kongair.com/api/v1"
+        ```
+
+        Send the returned `access_token` on every request:
+
+        ```
+        Authorization: Bearer <access_token>
+        ```
+
+        Required scopes: `flights:read` for read operations, `flights:write`
+        for write operations (encoded in the token's `scope` claim).
   schemas:
     Flight:
       type: object

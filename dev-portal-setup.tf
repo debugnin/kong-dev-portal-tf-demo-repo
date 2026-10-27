@@ -1,15 +1,19 @@
 # Create Dev Portal
 resource "konnect_portal" "dev_portal" {
-  name                      = var.dev_portal_name
-  authentication_enabled    = true
-  auto_approve_applications = true
-  auto_approve_developers   = true
-  rbac_enabled              = true
-  default_api_visibility    = "private"
-  default_page_visibility   = "private"
-  description               = "${var.dev_portal_desc_prefix} ${var.organisation_name} ${var.dev_portal_desc_suffix}"
-  display_name              = var.dev_portal_display_name
-  force_destroy             = "true"
+  name                                 = var.dev_portal_name
+  authentication_enabled               = true
+  auto_approve_applications            = true
+  auto_approve_developers              = true
+  rbac_enabled                         = true
+  default_api_visibility               = "private"
+  default_page_visibility              = "private"
+  description                          = "${var.dev_portal_desc_prefix} ${var.organisation_name} ${var.dev_portal_desc_suffix}"
+  display_name                         = var.dev_portal_display_name
+  force_destroy                        = "true"
+  # Without this, the Create Application page in the portal has no
+  # preselected auth strategy, which was a contributing factor in a
+  # frontend exception (Cloudflare error 1101) when submitting the form.
+  default_application_auth_strategy_id = konnect_application_auth_strategy.oidc_auth0.id
 }
 
 # Customization of Portal
