@@ -4,7 +4,7 @@ info:
   description: KongAir Bookings service provides customers the ability to book and retrieve flight bookings on KongAir.
   version: 0.1.0
 security:
-  - BearerAuth: []
+  - ApiKeyAuth: []
 paths:
   /bookings:
     get:
@@ -41,8 +41,6 @@ paths:
         - sales
       summary: Create a new customer booking
       operationId: post-booking
-      security:
-        - BearerAuth: []
       requestBody:
         content:
           application/json:
@@ -79,32 +77,17 @@ paths:
               example: Not found
 components:
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
       description: >-
-        JWT bearer token authentication. Obtain a client_id/client_secret by
-        registering an application in the KongAir Dev Portal (Dynamic Client
-        Registration), then exchange them for a JWT access token via the
-        OAuth2 client_credentials grant against the token endpoint:
+        API key authentication. Register an application in the KongAir Dev
+        Portal to get an API key, then send it on every request:
 
         ```
-        curl -X POST "__OIDC_TOKEN_URL__" \
-          -d grant_type=client_credentials \
-          -d client_id=<CLIENT_ID> \
-          -d client_secret=<CLIENT_SECRET> \
-          -d audience="https://kongair.com/api/v1"
+        apikey: <YOUR_API_KEY>
         ```
-
-        Send the returned `access_token` on every request:
-
-        ```
-        Authorization: Bearer <access_token>
-        ```
-
-        Required scopes: `bookings:read` for reads, `bookings:write` for
-        creating bookings (encoded in the token's `scope` claim).
   schemas:
     Booking:
       type: object

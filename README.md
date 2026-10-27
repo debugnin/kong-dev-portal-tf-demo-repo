@@ -9,7 +9,7 @@ This repository manages:
 - **Kong Konnect Control Plane**: Control plane for API gateway management
 - **Developer Portal**: Self-service portal for API consumers
 - **API Catalog**: APIs and docs published from OpenAPI specs in `api-specs/`
-- **Authentication**: Basic auth and OIDC (SSO), both enabled, with team-based access control
+- **Authentication**: Basic auth only for portal login; applications authenticate to published APIs via a Konnect-issued API key
 
 ## Architecture
 
@@ -43,7 +43,7 @@ State is stored locally (`terraform.tfstate`) — no remote backend is configure
 
 ### 3. Configure Variables
 
-Review and update `terraform.tfvars` with your environment-specific values (OIDC issuer/client, `dataplane_api_base_url`, etc.). This file is gitignored since it holds the OIDC client secret.
+Review and update `terraform.tfvars` with your environment-specific values (`dataplane_api_base_url`, etc.). This file is gitignored.
 
 ### 4. Plan and Apply
 
@@ -61,7 +61,7 @@ terraform apply
 ├── terraform.tfvars                  # Variable values (gitignored, environment-specific)
 ├── dev-portal-control-plane.tf       # Control plane, global plugins (ACE, CORS)
 │                                      # ACE enforces each API's publication auth strategy for the whole control plane
-├── dev-portal-setup.tf               # Portal, teams, OIDC/basic-auth, role assignments
+├── dev-portal-setup.tf               # Portal, teams, basic-auth login, role assignments
 ├── dev-portal-api-catalog.tf         # API catalog and auth strategy configuration
 ├── outputs.tf                        # Terraform outputs
 ├── scripts/
@@ -139,14 +139,14 @@ export CP_NAME="your-control-plane-name"
 
 ## Portal Teams and Access Control
 
-The portal includes team-based access control with both basic auth and OIDC (SSO) login enabled:
+The portal includes team-based access control with basic-auth-only login (no SSO/OIDC identity provider):
 
 **Teams**:
 
 - `portal-admin`: Full portal administration
 - `<api>-read` / `<api>-write` per API in the catalog (e.g. `flights-read`, `flights-write`) — generated automatically from `api-specs/`
 
-**OIDC Provider**: Configured via `dev_portal_oidc_*` variables; team-group mappings assign portal roles from IdP groups.
+Team membership is assigned directly by a Konnect Identity Admin (`konnect_mapping_enabled = true` on `konnect_portal_auth.dev_portal`) rather than mapped from IdP groups.
 
 ## Development Workflow
 
@@ -156,21 +156,6 @@ The portal includes team-based access control with both basic auth and OIDC (SSO
 4. **Commit and push** to version control
 
 ## Troubleshooting
-
-### DCR Integration Error
-
-If you get an "integration error" when creating applications with DCR:
-
-1. The Application Auth Strategy may be inactive (common after initial deployment)
-2. Run the activation script:
-   ```bash
-   export KONNECT_TOKEN="your-token"
-   ./scripts/activate-auth-strategy.sh
-   ```
-3. See [DCR_FIX.md](./DCR_FIX.md) for detailed troubleshooting
-4. Run diagnostics: `./scripts/check-dcr-config.sh`
-
-**Note**: The auth strategy `active` attribute is read-only in Terraform, so manual activation via the Konnect API or UI is required after initial deployment.
 
 ### CORS Issues
 
@@ -182,7 +167,8 @@ If you get an "integration error" when creating applications with DCR:
 
 - Verify `KONNECT_TOKEN` is set and valid
 - Check token has appropriate permissions (admin or gateway admin)
-- Both basic auth and OIDC are enabled on the portal — see `dev-portal-setup.tf`'s `dev_portal_oidc_config` provisioner
+- Only basic auth is enabled on the portal — see `konnect_portal_auth.dev_portal` in `dev-portal-setup.tf`
+- Applications authenticate to APIs with the API key issued when they're registered in the portal (`konnect_application_auth_strategy.api_key` in `dev-portal-api-catalog.tf`), sent on the `apikey` header
 
 ## Contributing
 

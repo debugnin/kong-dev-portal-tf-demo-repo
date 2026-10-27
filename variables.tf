@@ -130,80 +130,10 @@ variable "dev_portal_page_content_home_page_hero_img_width" {
   default     = "55%"
 }
 
-# OIDC
-variable "dev_portal_oidc_issuer" {
-  description = "OIDC issuer URL"
-  type        = string
-  default     = ""
-}
-
-variable "dev_portal_oidc_client_id" {
-  description = "OIDC client ID"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "dev_portal_oidc_client_secret" {
-  description = "OIDC client secret"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "dev_portal_oidc_scopes" {
-  description = "OIDC scopes"
-  type        = list(string)
-  default     = ["openid", "profile", "email"]
-}
-
-variable "dev_portal_oidc_claim_name" {
-  description = "OIDC claim mapping for user name"
-  type        = string
-  default     = "name"
-}
-
-variable "dev_portal_oidc_claim_email" {
-  description = "OIDC claim mapping for user email"
-  type        = string
-  default     = "email"
-}
-
-variable "dev_portal_oidc_claim_groups" {
-  description = "OIDC claim mapping for user groups"
-  type        = string
-  default     = "group"
-}
-
-# Application Auth Strategy (M2M API consumers)
-variable "app_auth_oidc_issuer" {
-  description = "OIDC issuer for the M2M application auth strategy"
-  type        = string
-  default     = ""
-}
-
-variable "app_auth_oidc_scopes" {
-  description = "OIDC scopes for the M2M application auth strategy"
-  type        = list(string)
-  default     = []
-}
-
-variable "app_auth_oidc_audience" {
-  description = "OIDC audience (API identifier) for the M2M application auth strategy"
-  type        = string
-  default     = ""
-}
-
-variable "app_auth_dcr_client_id" {
-  description = "Client ID of the Auth0 Machine-to-Machine application used for Dynamic Client Registration"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "app_auth_dcr_client_secret" {
-  description = "Client secret of the Auth0 Machine-to-Machine application used for Dynamic Client Registration"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
+# Note: Dev Portal login previously supported OIDC/SSO, and the
+# application auth strategy previously used Auth0 OIDC via Dynamic Client
+# Registration (DCR). Both have been replaced with simpler alternatives:
+# the portal now only supports basic-auth login (konnect_portal_auth in
+# dev-portal-setup.tf), and applications authenticate via a Konnect-issued
+# API key (konnect_application_auth_strategy.api_key in
+# dev-portal-api-catalog.tf) — no external identity provider is required.

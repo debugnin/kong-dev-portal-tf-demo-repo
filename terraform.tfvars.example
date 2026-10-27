@@ -31,20 +31,6 @@ dev_portal_page_content_home_page_hero_bg_img_url = "https://github.com/jharmn/i
 dev_portal_page_content_home_page_hero_text_color = "#000000"
 dev_portal_page_content_home_page_hero_img_width  = "55%"
 
-# --- OIDC (Dev Portal SSO login) ---
-dev_portal_oidc_issuer        = "https://dev-xxxx.au.auth0.com/"
-dev_portal_oidc_client_id     = "your-oidc-client-id"
-dev_portal_oidc_client_secret = "your-oidc-client-secret"
-dev_portal_oidc_scopes        = ["openid", "profile", "email"]
-dev_portal_oidc_claim_name    = "name"
-dev_portal_oidc_claim_email   = "email"
-dev_portal_oidc_claim_groups  = "https://yourdomain.com/groups"
-
-# --- Application Auth Strategy (M2M API consumers) ---
-app_auth_oidc_issuer   = "https://dev-xxxx.au.auth0.com/"
-app_auth_oidc_scopes   = []
-app_auth_oidc_audience = "https://kongair.com/api/v1"
-
-# Auth0 Machine-to-Machine application used for Dynamic Client Registration
-app_auth_dcr_client_id     = "your-auth0-dcr-client-id"
-app_auth_dcr_client_secret = "your-auth0-dcr-client-secret"
+# Dev Portal login is basic-auth only (no SSO/OIDC). Applications
+# authenticate via a Konnect-issued API key (no external identity
+# provider / DCR required) — no further variables needed for auth.

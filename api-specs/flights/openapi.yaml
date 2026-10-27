@@ -4,7 +4,7 @@ info:
   description: KongAir Flights service provides the scheduled flights for KongAir.
   version: 0.1.0
 security:
-  - BearerAuth: []
+  - ApiKeyAuth: []
 paths:
   /flights:
     get:
@@ -121,32 +121,17 @@ paths:
                     type: string
 components:
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
       description: >-
-        JWT bearer token authentication. Obtain a client_id/client_secret by
-        registering an application in the KongAir Dev Portal (Dynamic Client
-        Registration), then exchange them for a JWT access token via the
-        OAuth2 client_credentials grant against the token endpoint:
+        API key authentication. Register an application in the KongAir Dev
+        Portal to get an API key, then send it on every request:
 
         ```
-        curl -X POST "__OIDC_TOKEN_URL__" \
-          -d grant_type=client_credentials \
-          -d client_id=<CLIENT_ID> \
-          -d client_secret=<CLIENT_SECRET> \
-          -d audience="https://kongair.com/api/v1"
+        apikey: <YOUR_API_KEY>
         ```
-
-        Send the returned `access_token` on every request:
-
-        ```
-        Authorization: Bearer <access_token>
-        ```
-
-        Required scopes: `flights:read` for read operations, `flights:write`
-        for write operations (encoded in the token's `scope` claim).
   schemas:
     Flight:
       type: object

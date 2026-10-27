@@ -13,7 +13,7 @@ resource "konnect_portal" "dev_portal" {
   # Without this, the Create Application page in the portal has no
   # preselected auth strategy, which was a contributing factor in a
   # frontend exception (Cloudflare error 1101) when submitting the form.
-  default_application_auth_strategy_id = konnect_application_auth_strategy.oidc_auth0.id
+  default_application_auth_strategy_id = konnect_application_auth_strategy.api_key.id
 }
 
 # Customization of Portal
@@ -297,35 +297,17 @@ resource "null_resource" "api_team_role" {
   depends_on = [konnect_portal_team.api_team]
 }
 
-# Configure OIDC Authentication for Dev Portal
-resource "konnect_portal_identity_provider" "dev_portal_oidc" {
-  portal_id = konnect_portal.dev_portal.id
-  type      = "oidc"
-  enabled   = true
-
-  config = {
-    oidc_identity_provider_config = {
-      issuer_url    = var.dev_portal_oidc_issuer
-      client_id     = var.dev_portal_oidc_client_id
-      client_secret = var.dev_portal_oidc_client_secret
-      scopes        = var.dev_portal_oidc_scopes
-      claim_mappings = {
-        name   = var.dev_portal_oidc_claim_name
-        email  = var.dev_portal_oidc_claim_email
-        groups = var.dev_portal_oidc_claim_groups
-      }
-    }
-  }
-}
-
+# Dev Portal login - basic auth only. No SSO/OIDC identity provider is
+# configured; teams are assigned directly via konnect_mapping_enabled
+# (Konnect Identity Admin assigns teams to a developer) rather than IdP
+# group mapping.
 resource "konnect_portal_auth" "dev_portal" {
-  portal_id                 = konnect_portal.dev_portal.id
-  basic_auth_enabled        = true
-  idp_mapping_enabled       = true
-  konnect_mapping_enabled   = true
-  oidc_team_mapping_enabled = true
+  portal_id               = konnect_portal.dev_portal.id
+  basic_auth_enabled      = true
+  idp_mapping_enabled     = false
+  konnect_mapping_enabled = true
 
-  # The API always mirrors these deprecated fields from the real
+  # The API always mirrors these deprecated fields from the (now absent)
   # konnect_portal_identity_provider config, ignoring writes — they can
   # never converge to the null we intentionally leave them at.
   lifecycle {
@@ -335,14 +317,8 @@ resource "konnect_portal_auth" "dev_portal" {
       oidc_client_id,
       oidc_issuer,
       oidc_scopes,
+      oidc_team_mapping_enabled,
       saml_auth_enabled,
     ]
   }
-}
-
-resource "konnect_portal_identity_provider_team_group_mapping" "portal_admin" {
-  portal_id             = konnect_portal.dev_portal.id
-  identity_provider_id  = konnect_portal_identity_provider.dev_portal_oidc.id
-  team_id               = konnect_portal_team.portal-admin.id
-  group                 = "portal-admin"
 }
