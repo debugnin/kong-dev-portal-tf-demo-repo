@@ -21,7 +21,9 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Certificate directory containing sensitive keys and certificates
+# Certificate directory containing sensitive keys and certificates, plus
+# the resolved control-plane/telemetry endpoints written by
+# scripts/start-local-dp.sh
 cert/
 
 # OS
